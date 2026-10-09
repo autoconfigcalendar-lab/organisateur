@@ -1,6 +1,6 @@
 // Rend l'appli disponible hors connexion : les fichiers de l'appli sont gardés en cache,
 // toujours mis à jour depuis le réseau quand il est là. Les appels à Google ne passent pas par ici.
-const CACHE = "organisateur-v1";
+const CACHE = "organisateur-v2";
 const FICHIERS = ["./", "index.html", "style.css", "config.js", "moteur.js", "google.js", "ui.js", "manifest.webmanifest", "icone.png"];
 
 self.addEventListener("install", e => {

@@ -34,16 +34,19 @@ const GOOGLE = {
   peutTenterSilence() { return Date.now() - (lireLocal("org-essai-silencieux") || 0) > 60000; },
 
   connecter(silencieux) {
+    if (silencieux) ecrireLocal("org-essai-silencieux", Date.now());
+    location.assign(this.urlConnexion(silencieux));
+  },
+  urlConnexion(silencieux) {
     const etat = Math.random().toString(36).slice(2) + Date.now().toString(36);
     ecrireLocal("org-oauth-etat", etat);
-    if (silencieux) ecrireLocal("org-essai-silencieux", Date.now());
     const p = new URLSearchParams({
       client_id: CONFIG.clientId, redirect_uri: urlAppli(), response_type: "token",
       scope: PORTEES, include_granted_scopes: "true", state: etat,
     });
     if (silencieux) p.set("prompt", "none");
     if (this.email) p.set("login_hint", this.email);
-    location.assign("https://accounts.google.com/o/oauth2/v2/auth?" + p);
+    return "https://accounts.google.com/o/oauth2/v2/auth?" + p;
   },
 
   // À l'ouverture : récupère le jeton renvoyé par Google dans l'adresse, puis nettoie l'adresse.
@@ -101,31 +104,33 @@ async function toutesLesPages(url) {
 }
 
 // ---------------------------------------------------------------- stockage (Google Drive, dossier privé de l'appli)
+// Pour repérer une modification faite depuis un autre appareil, on compare l'empreinte du contenu
+// (md5Checksum) : le numéro de version de Drive augmente aussi tout seul après chaque envoi.
 const STOCKAGE = {
   nom: "organisateur.json",
   async trouver() {
-    const r = await GOOGLE.api(`${DRIVE}/files?spaces=appDataFolder&q=${enc(`name='${this.nom}'`)}&fields=files(id,version)&orderBy=createdTime`);
+    const r = await GOOGLE.api(`${DRIVE}/files?spaces=appDataFolder&q=${enc(`name='${this.nom}'`)}&fields=files(id,md5Checksum)&orderBy=createdTime`);
     return (r.files || [])[0] || null;
   },
   async lire() {
     const f = await this.trouver();
     if (!f) return { id: null, version: null, contenu: null };
     const contenu = await GOOGLE.api(`${DRIVE}/files/${f.id}?alt=media`);
-    return { id: f.id, version: f.version, contenu: typeof contenu === "string" ? JSON.parse(contenu) : contenu };
+    return { id: f.id, version: f.md5Checksum, contenu: typeof contenu === "string" ? JSON.parse(contenu) : contenu };
   },
   async version(id) {
-    return (await GOOGLE.api(`${DRIVE}/files/${id}?fields=version`)).version;
+    return (await GOOGLE.api(`${DRIVE}/files/${id}?fields=md5Checksum`)).md5Checksum;
   },
   async ecrire(id, json) {
     if (id) {
-      const r = await GOOGLE.api(`${DRIVE_ENVOI}/files/${id}?uploadType=media&fields=id,version`, { method: "PATCH", body: json, entetes: { "Content-Type": "application/json" } });
-      return { id: r.id, version: r.version };
+      const r = await GOOGLE.api(`${DRIVE_ENVOI}/files/${id}?uploadType=media&fields=id,md5Checksum`, { method: "PATCH", body: json, entetes: { "Content-Type": "application/json" } });
+      return { id: r.id, version: r.md5Checksum };
     }
     const limite = "organisateur" + Date.now().toString(36);
     const corps = `--${limite}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: this.nom, parents: ["appDataFolder"] })}\r\n` +
       `--${limite}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${limite}--`;
-    const r = await GOOGLE.api(`${DRIVE_ENVOI}/files?uploadType=multipart&fields=id,version`, { method: "POST", body: corps, entetes: { "Content-Type": `multipart/related; boundary=${limite}` } });
-    return { id: r.id, version: r.version };
+    const r = await GOOGLE.api(`${DRIVE_ENVOI}/files?uploadType=multipart&fields=id,md5Checksum`, { method: "POST", body: corps, entetes: { "Content-Type": `multipart/related; boundary=${limite}` } });
+    return { id: r.id, version: r.md5Checksum };
   },
 };
 
