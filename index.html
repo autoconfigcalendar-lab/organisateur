@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Organisateur">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#2c5c4e">
+  <title>Organisateur</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icone.png">
+  <link rel="icon" href="icone.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="connexion-perdue" class="bandeau-connexion" hidden></div>
+<main id="app"></main>
+<nav class="onglets" id="onglets" aria-label="Sections"></nav>
+<button class="fab" data-act="rapide" aria-label="Ajouter une tâche ou un rendez-vous">+</button>
+<div id="modale"></div>
+<div id="toast" class="toast" hidden></div>
+<div id="bulle" class="bulle" role="tooltip" hidden></div>
+<script src="config.js"></script>
+<script src="moteur.js"></script>
+<script src="google.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
